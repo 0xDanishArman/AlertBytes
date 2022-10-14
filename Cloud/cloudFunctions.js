@@ -762,3 +762,21 @@ Moralis.Cloud.define("deleteAddress", async (request) => {
     );
   }
 });
+
+Moralis.Cloud.define("checkoldtelegram", async (request) => {
+  const query = new Moralis.Query("_User");
+  query.equalTo("chat_id", request.params.chatID.toString());
+  const obj = await query.first({ useMasterKey: true });
+  if (obj) {
+    obj.unset("telegram");
+    obj.unset("chat_id");
+    obj.save(null, { useMasterKey: true }).then(
+      (monster) => {
+        logger.info("The old telegram was deleted successfully.");
+      },
+      (error) => {
+        logger.info(error);
+      }
+    );
+  }
+});
