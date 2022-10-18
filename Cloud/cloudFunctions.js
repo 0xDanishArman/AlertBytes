@@ -33,19 +33,19 @@ Moralis.Cloud.define("watchAddress", async (request) => {
     var watchCount;
 
     // check 2/2: address is not already being watched
-    if (request.params.chain === "matic testnet") {
+    if (request.params.chain === "matic") {
       countQuery = new Moralis.Query("WatchedPolygonAddress");
       countQuery.equalTo("address", address);
       watchCount = await countQuery.count();
-    } else if (request.params.chain === "ropsten") {
+    } else if (request.params.chain === "eth") {
       countQuery = new Moralis.Query("WatchedEthAddress");
       countQuery.equalTo("address", address);
       watchCount = await countQuery.count();
-    } else if (request.params.chain === "bsc testnet") {
+    } else if (request.params.chain === "bsc") {
       countQuery = new Moralis.Query("WatchedBscAddress");
       countQuery.equalTo("address", address);
       watchCount = await countQuery.count();
-    } else if (request.params.chain === "avalanche testnet") {
+    } else if (request.params.chain === "avalanche") {
       countQuery = new Moralis.Query("WatchedAvaxAddress");
       countQuery.equalTo("address", address);
       watchCount = await countQuery.count();
@@ -60,7 +60,7 @@ Moralis.Cloud.define("watchAddress", async (request) => {
 
     // add address to watch list
     // sync all txs in realtime to WatchedPolygonAddress class
-    if (request.params.chain === "matic testnet") {
+    if (request.params.chain === "matic") {
       await Moralis.Cloud.run(
         "watchPolygonAddress",
         {
@@ -73,7 +73,8 @@ Moralis.Cloud.define("watchAddress", async (request) => {
       const WatchedPolygon = Moralis.Object.extend("WatchedPolygon");
       // Create a new instance of that class.
       watched = new WatchedPolygon();
-    } else if (request.params.chain === "ropsten") {
+    } else if (request.params.chain === "eth") {
+      logger.info("hitted our mainnet______________");
       await Moralis.Cloud.run(
         "watchEthAddress",
         {
@@ -86,7 +87,7 @@ Moralis.Cloud.define("watchAddress", async (request) => {
       const WatchedEth = Moralis.Object.extend("WatchedEth");
       // Create a new instance of that class.
       watched = new WatchedEth();
-    } else if (request.params.chain === "bsc testnet") {
+    } else if (request.params.chain === "bsc") {
       await Moralis.Cloud.run(
         "watchBscAddress",
         {
@@ -99,7 +100,7 @@ Moralis.Cloud.define("watchAddress", async (request) => {
       const WatchedBsc = Moralis.Object.extend("WatchedBsc");
       // Create a new instance of that class.
       watched = new WatchedBsc();
-    } else if (request.params.chain === "avalanche testnet") {
+    } else if (request.params.chain === "avalanche") {
       await Moralis.Cloud.run(
         "watchAvaxAddress",
         {
@@ -180,7 +181,7 @@ Moralis.Cloud.afterSave("PolygonTransactions", async function (request) {
       // watch_data exist, fire alert with link to block explorer
       if (watch_data) {
         const tx_url =
-          "https://mumbai.polygonscan.com/tx/" + request.object.get("hash");
+          "https://polygonscan.com/tx/" + request.object.get("hash");
         // alert method
         let _alert_method = watch_data.get("alertMethod");
         // threshold
@@ -236,8 +237,10 @@ Moralis.Cloud.afterSave("PolygonTransactions", async function (request) {
 });
 
 Moralis.Cloud.afterSave("BscTransactions", async function (request) {
+  logger.info("BSC_TRANSACTION&&&&&&&&&&&&");
   const confirmed = await request.object.get("confirmed");
   i = i + 1;
+  logger.error("OUR REQUEST" + JSON.stringify(request.object));
 
   if (!confirmed && i % 2 == 1) {
     logger.info("Txn added now...");
@@ -272,8 +275,7 @@ Moralis.Cloud.afterSave("BscTransactions", async function (request) {
       const watch_data = watch_data_entries[i];
       // watch_data exist, fire alert with link to block explorer
       if (watch_data) {
-        const tx_url =
-          "https://testnet.bscscan.com/tx/" + request.object.get("hash");
+        const tx_url = "https://bscscan.com/tx/" + request.object.get("hash");
         // alert method
         let _alert_method = watch_data.get("alertMethod");
         // threshold
@@ -370,8 +372,7 @@ Moralis.Cloud.afterSave("EthTransactions", async function (request) {
 
       // watch_data exist, fire alert with link to block explorer
       if (watch_data) {
-        const tx_url =
-          "https://ropsten.etherscan.io/tx/" + request.object.get("hash");
+        const tx_url = "https://etherscan.io/tx/" + request.object.get("hash");
         // alert method
         let _alert_method = watch_data.get("alertMethod");
         // threshold
@@ -464,8 +465,7 @@ Moralis.Cloud.afterSave("AvaxTransactions", async function (request) {
       // watch_data exist, fire alert with link to block explorer
       if (watch_data) {
         const tx_url =
-          "https://testnet.avascan.info/blockchain/c/tx/" +
-          request.object.get("hash");
+          "https://avascan.info/blockchain/c/tx/" + request.object.get("hash");
         // alert method
         let _alert_method = watch_data.get("alertMethod");
         // threshold
