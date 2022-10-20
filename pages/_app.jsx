@@ -8,7 +8,7 @@ import StatusContext from "../store/status-context";
 
 function MyApp({ Component, pageProps }) {
   const [account, setAccount] = useState("");
-  const [currentNetwork, setCurrentNetwork] = useState("testnets");
+  const [currentNetwork, setCurrentNetwork] = useState("mainnets");
   const testnets = {
     chains: {
       "matic testnet": "Mumbai (Matic Testnet)",
@@ -23,11 +23,10 @@ function MyApp({ Component, pageProps }) {
 
   const mainnets = {
     chains: {
-      matic: "Polygon (Matic) Mainnet",
       eth: "Ethereum Mainnet",
       bsc: "BSC Mainnet",
+      matic: "Polygon (Matic) Mainnet",
       avalanche: "Avalanche Mainnet",
-      fantom: "Fantom Mainnet",
     },
   };
 
@@ -67,7 +66,7 @@ function MyApp({ Component, pageProps }) {
             <Component
               {...pageProps}
               account={account}
-              networks={mainnets}
+              networks={networks}
               setAccount={setAccount}
             />
           </Layout>

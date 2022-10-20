@@ -49,6 +49,10 @@ Moralis.Cloud.define("watchAddress", async (request) => {
       countQuery = new Moralis.Query("WatchedAvaxAddress");
       countQuery.equalTo("address", address);
       watchCount = await countQuery.count();
+    } else if (request.params.chain === "fantom") {
+      countQuery = new Moralis.Query("WatchedFtmAddress");
+      countQuery.equalTo("address", address);
+      watchCount = await countQuery.count();
     }
 
     if (watchCount > 0) {
@@ -113,6 +117,19 @@ Moralis.Cloud.define("watchAddress", async (request) => {
       const WatchedAvax = Moralis.Object.extend("WatchedAvax");
       // Create a new instance of that class.
       watched = new WatchedAvax();
+    } else if (request.params.chain === "fantom") {
+      await Moralis.Cloud.run(
+        "watchFtmAddress",
+        {
+          address,
+          sync_historical: false,
+        },
+        { useMasterKey: true }
+      );
+
+      const WatchedFantom = Moralis.Object.extend("WatchedFantom");
+      // Create a new instance of that class.
+      watched = new WatchedFantom();
     }
 
     // get row of saved address
@@ -240,7 +257,6 @@ Moralis.Cloud.afterSave("BscTransactions", async function (request) {
   logger.info("BSC_TRANSACTION&&&&&&&&&&&&");
   const confirmed = await request.object.get("confirmed");
   i = i + 1;
-  logger.error("OUR REQUEST" + JSON.stringify(request.object));
 
   if (!confirmed && i % 2 == 1) {
     logger.info("Txn added now...");
@@ -431,7 +447,7 @@ Moralis.Cloud.afterSave("EthTransactions", async function (request) {
 Moralis.Cloud.afterSave("AvaxTransactions", async function (request) {
   const confirmed = await request.object.get("confirmed");
   i = i + 1;
-
+  logger.info("avaxxx");
   if (!confirmed && i % 2 == 1) {
     logger.info("Txn added now...");
     logger.info("--------! var i = " + i);
@@ -463,9 +479,9 @@ Moralis.Cloud.afterSave("AvaxTransactions", async function (request) {
     for (let i = 0; i < watch_data_entries.length; i++) {
       const watch_data = watch_data_entries[i];
       // watch_data exist, fire alert with link to block explorer
+      logger.info("avax watchs");
       if (watch_data) {
-        const tx_url =
-          "https://avascan.info/blockchain/c/tx/" + request.object.get("hash");
+        const tx_url = "https://snowtrace.io/tx/" + request.object.get("hash");
         // alert method
         let _alert_method = watch_data.get("alertMethod");
         // threshold
@@ -501,6 +517,97 @@ Moralis.Cloud.afterSave("AvaxTransactions", async function (request) {
                   watch_data,
                   txn_data,
                   "AVAX-USD",
+                  tx_url
+                );
+                logger.info(
+                  "--------! Sent alert message on Email and telegram !--------"
+                );
+              }
+            }
+          }
+        } else {
+          return false;
+        }
+      }
+    }
+  } else {
+    logger.info("--------! Not for even var i = " + i);
+    return false;
+  }
+});
+
+Moralis.Cloud.afterSave("FantomTransactions", async function (request) {
+  const confirmed = await request.object.get("confirmed");
+  i = i + 1;
+
+  if (!confirmed && i % 2 == 1) {
+    logger.info("Txn added now...");
+    logger.info("--------! var i = " + i);
+
+    // check address is in watch list
+    let to_address = request.object.get("to_address");
+    let from_address = request.object.get("from_address");
+
+    // if tx related to watched addresses, fetch meta data
+    const watchAddressQuery = new Moralis.Query("WatchedFantom");
+    // address of tx == to_address or from_address
+    watchAddressQuery.containedIn("address", [to_address, from_address]);
+    watchAddressQuery.select(
+      "address",
+      "name",
+      "alertMethod",
+      "conditions",
+      "threshold",
+      "notes",
+      "user.email",
+      "user.username",
+      "user.chat_id"
+    );
+    // results = tx data
+    let watch_data_entries = await watchAddressQuery.find({
+      useMasterKey: true,
+    });
+
+    for (let i = 0; i < watch_data_entries.length; i++) {
+      const watch_data = watch_data_entries[i];
+      // watch_data exist, fire alert with link to block explorer
+      if (watch_data) {
+        const tx_url = "https://ftmscan.com/tx/" + request.object.get("hash");
+        // alert method
+        let _alert_method = watch_data.get("alertMethod");
+        // threshold
+        let _threshold = watch_data.get("threshold");
+        let txn_data = request.object;
+
+        if (txn_data) {
+          // if threshold set
+          if (_threshold) {
+            const priceInUSD = await getPriceInUSD("FTM-USD");
+            const txnAmountInUSD = (
+              Number(priceInUSD) *
+              Number(parseFloat(txn_data.get("value")) / 10 ** 18)
+            ).toFixed(4);
+            if (txnAmountInUSD >= parseFloat(_threshold)) {
+              // if passed conditions for the saved address, send alert
+              if (_alert_method == "telegram") {
+                await sendTelegramAlert(
+                  watch_data,
+                  txn_data,
+                  "FTM-USD",
+                  tx_url
+                );
+                logger.info(
+                  "--------! Sent alert message on Telegram FTM !--------"
+                );
+              } else if (_alert_method == "email") {
+                await sendEmailAlert(watch_data, txn_data, "FTM-USD", tx_url);
+                logger.info("--------! Sent alert message on Email !--------");
+              } else if (_alert_method == "both") {
+                await sendEmailAlert(watch_data, txn_data, "FTM-USD", tx_url);
+                await sendTelegramAlert(
+                  watch_data,
+                  txn_data,
+                  "FTM-USD",
                   tx_url
                 );
                 logger.info(

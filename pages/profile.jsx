@@ -10,8 +10,10 @@ import {
 } from "react-moralis";
 import DeleteModal from "../components/Modal/DeleteModal";
 import StatusContext from "../store/status-context";
+import Loader from "../components/loader/loader";
 
 const Profile = () => {
+  const [loading, setloading] = useState(false);
   const randomString = () => Math.random().toString(36).substr(2, 9);
 
   const useStateWithCallbackLazy = (initialValue) => {
@@ -174,10 +176,14 @@ const Profile = () => {
         console.log(telegram);
 
         let telegramiddata = data.result.filter(
-          (messageBlock) => messageBlock.message.chat.username === telegram
+          (messageBlock) =>
+            // if (messageBlock.message.chat.username) {
+            messageBlock.message.chat.username === telegram
+          // }
         );
+        console.log(JSON.stringify(telegramiddata), "tele");
         if (telegramiddata.length === 0) {
-          alert("Your Telegram is Not verified");
+          alert("Your Telegram Username is Not verified");
         } else {
           settempchatid(telegramiddata[0].message.chat.id, () => {
             VerifyTeleOTP(telegramiddata[0].message.chat.id);
@@ -321,12 +327,15 @@ const Profile = () => {
     }
   );
   const deleteWatchedAddress = () => {
+    setloading(true);
     deleteAddress({
       onSuccess: async (object) => {
         setDeleteModalOpen(false);
+        setloading(false);
         router.reload(window.location.pathname);
       },
       onError: (error) => {
+        setloading(false);
         console.log("deleteAddress Error:", error);
       },
     });
@@ -371,6 +380,7 @@ const Profile = () => {
         <meta name="description" content="AlertBytes" />
       </Head>
       <div className="container">
+        <Loader loading={loading} />
         <h1 className="text-center mt-4">Hey!</h1>
         <div style={{ textAlign: "center" }} className="wallet_addr">
           <span className={styles.submit_form_resend} type="submit">
