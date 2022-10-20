@@ -10,7 +10,7 @@ import {
 } from "react-moralis";
 import DeleteModal from "../components/Modal/DeleteModal";
 import StatusContext from "../store/status-context";
-import Loader from "../components/loader/loader";
+import Loader from "../components/loader";
 
 const Profile = () => {
   const [loading, setloading] = useState(false);

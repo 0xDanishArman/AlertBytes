@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import { useMoralis } from "react-moralis";
 import StatusContext from "../store/status-context";
 import AddressAddedModal from "../components/Modal/AddressAddedModal";
-import Loader from "../components/loader/loader";
+import Loader from "../components/loader";
 
 const Home = ({ account, setAccount, networks }) => {
   const { Moralis, user, isAuthenticated } = useMoralis();
